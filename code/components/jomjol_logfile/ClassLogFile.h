@@ -12,7 +12,7 @@ private:
 public:
     ClassLogFile(std::string _logpath, std::string _logfile);
 
-    std::string getESPHeapInfo();
+    // std::string getESPHeapInfo();
 
     void WriteHeapInfo(std::string _id);
 

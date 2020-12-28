@@ -198,6 +198,9 @@ bool ClassFlowDigit::doAlignAndCut(string time)
 
 bool ClassFlowDigit::doNeuralNetwork(string time)
 {
+    std::string aFktId="ClassFlowDigit::doNeuralNetwork ";
+    char buf[80];
+
     string logPath = CreateLogFolder(time);
 
 #ifndef OHNETFLITE
@@ -218,6 +221,9 @@ bool ClassFlowDigit::doNeuralNetwork(string time)
 
 #endif
         printf("Result Digit%i: %d\n", i, ROI[i]->resultklasse);
+
+        sprintf(buf,"Result Digit%i: %d\n", i, ROI[i]->resultklasse);
+        LogFile.WriteToFile(aFktId + string(buf));
 
         if (isLogImage)
         {

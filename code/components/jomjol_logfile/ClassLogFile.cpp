@@ -17,40 +17,55 @@ void ClassLogFile::WriteHeapInfo(std::string _id)
     WriteToFile(_zw);
 }
 
+/*
+// code identical to Helper.cpp
+// more detailed and structured info both for spi and internal heap
+// SPI Heap:   larg.Blk:  min spi free   Internal heap 	  larg. Blk free  Min Heap free 
 
-std::string ClassLogFile::getESPHeapInfo(){
+string getESPHeapInfo(){
 	string espInfoResultStr = "";
 	char aMsgBuf[80];
     
 	multi_heap_info_t aMultiHead_info ;
 	heap_caps_get_info (&aMultiHead_info,MALLOC_CAP_8BIT);
 	size_t aFreeHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-	size_t aMinFreeHeadSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT);
 	size_t aMinFreeHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT);
 	size_t aHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
-	sprintf(aMsgBuf,"Free Heap Size: \t%ld", (long) aFreeHeapSize);
+	
 	size_t aFreeSPIHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
- 	size_t aFreeInternalHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
-	size_t aMinFreeInternalHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	size_t aMinFreeSpiHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
+	size_t aSpiHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
 
-	sprintf(aMsgBuf,"\tHeap:\t%ld", (long) aFreeHeapSize);
+ 	size_t aFreeInternalHeapSize  = 		   heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	size_t aMinFreeInternalHeapSize =  		   heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	size_t aInternalHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	
+	// sprintf(aMsgBuf," Heap: %ld", (long) aFreeHeapSize);
+	//espInfoResultStr += string(aMsgBuf);
+	//sprintf(aMsgBuf," Min Free: %ld", (long) aMinFreeHeapSize);
+	//espInfoResultStr += string(aMsgBuf);
+	//sprintf(aMsgBuf," larg. Block:  %ld", (long) aHeapLargestFreeBlockSize);
+	//espInfoResultStr += string(aMsgBuf);
+	
+	sprintf(aMsgBuf," SPI Heap: %ld",        (long) aFreeSPIHeapSize);
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf,"\tMin Free:\t%ld", (long) aMinFreeHeapSize);
+	sprintf(aMsgBuf," larg. Blk  free: %ld", (long) (aSpiHeapLargestFreeBlockSize));
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf,"\tlarg. Block: \t%ld", (long) aHeapLargestFreeBlockSize);
+	sprintf(aMsgBuf," Min SPI free: %ld",    (long) (aMinFreeSpiHeapSize));
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf,"\tSPI Heap:\t%ld", (long) aFreeSPIHeapSize);
+	//sprintf(aMsgBuf," Min Free Heap Size: %ld", (long) aMinFreeHeapSize);
+	//sprintf(aMsgBuf," NOT_SPI Heap: %ld", (long) (aFreeHeapSize - aFreeSPIHeapSize));
+	//espInfoResultStr += string(aMsgBuf);
+	//sprintf(aMsgBuf," largest Block Size:  %ld", (long) aHeapLargestFreeBlockSize);
+	sprintf(aMsgBuf," Internal Heap: %ld",   (long) (aFreeInternalHeapSize));
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf,"\tMin Free Heap Size:\t%ld", (long) aMinFreeHeadSize);
-	sprintf(aMsgBuf,"\tNOT_SPI Heap:\t%ld", (long) (aFreeHeapSize - aFreeSPIHeapSize));
+	sprintf(aMsgBuf," larg. Blk  free: %ld", (long) (aInternalHeapLargestFreeBlockSize));
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf,"\tlargest Block Size: \t%ld", (long) aHeapLargestFreeBlockSize);
-	sprintf(aMsgBuf,"\tInternal Heap:\t%ld", (long) (aFreeInternalHeapSize));
-	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf,"\tInternal Min Heap free:\t%ld", (long) (aMinFreeInternalHeapSize));
+	sprintf(aMsgBuf," Min Heap free: %ld",   (long) (aMinFreeInternalHeapSize));
 	espInfoResultStr += string(aMsgBuf);
 	return 	espInfoResultStr;
 }
+*/
 
 void ClassLogFile::WriteToDedicatedFile(std::string _fn, std::string info, bool _time)
 {
@@ -63,7 +78,7 @@ void ClassLogFile::WriteToDedicatedFile(std::string _fn, std::string info, bool 
 
 //    pFile = OpenFileAndWait(_fn.c_str(), "a"); 
     pFile = fopen(_fn.c_str(), "a+");
-    printf("Logfile opened: %s\n", _fn.c_str());
+    printf("Logfile opened: %s content: %s\n", _fn.c_str(),info.c_str());
 
     if (pFile!=NULL) {
         if (_time)

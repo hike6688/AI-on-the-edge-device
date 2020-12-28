@@ -19,6 +19,9 @@
 using namespace std;
 
 /////////////////////////////////////////////////////////////////////////////////////////////
+
+// more detailed and structured info both for spi and internal heap
+// SPI Heap:   larg.Blk:  min spi free   Internal heap 	  larg. Blk free  Min Heap free 
 string getESPHeapInfo(){
 	string espInfoResultStr = "";
 	char aMsgBuf[80];
@@ -26,43 +29,87 @@ string getESPHeapInfo(){
 	multi_heap_info_t aMultiHead_info ;
 	heap_caps_get_info (&aMultiHead_info,MALLOC_CAP_8BIT);
 	size_t aFreeHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-	size_t aMinFreeHeadSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT);
 	size_t aMinFreeHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT);
 	size_t aHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
-	sprintf(aMsgBuf," Free Heap Size: %ld", (long) aFreeHeapSize);
+	
 	size_t aFreeSPIHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
- 	size_t aFreeInternalHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
-	 size_t aMinFreeInternalHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	size_t aMinFreeSpiHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
+	size_t aSpiHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
 
-	sprintf(aMsgBuf," Heap: %ld", (long) aFreeHeapSize);
+ 	size_t aFreeInternalHeapSize  = 		   heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	size_t aMinFreeInternalHeapSize =  		   heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	size_t aInternalHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	
+	/* sprintf(aMsgBuf," Heap: %ld", (long) aFreeHeapSize);
 	espInfoResultStr += string(aMsgBuf);
 	sprintf(aMsgBuf," Min Free: %ld", (long) aMinFreeHeapSize);
 	espInfoResultStr += string(aMsgBuf);
 	sprintf(aMsgBuf," larg. Block:  %ld", (long) aHeapLargestFreeBlockSize);
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf," SPI Heap: %ld", (long) aFreeSPIHeapSize);
+	*/
+	sprintf(aMsgBuf," SPI Heap: %ld",        (long) aFreeSPIHeapSize);
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf," Min Free Heap Size: %ld", (long) aMinFreeHeadSize);
-	sprintf(aMsgBuf," NOT_SPI Heap: %ld", (long) (aFreeHeapSize - aFreeSPIHeapSize));
+	sprintf(aMsgBuf," larg. Blk  free: %ld", (long) (aSpiHeapLargestFreeBlockSize));
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf," largest Block Size:  %ld", (long) aHeapLargestFreeBlockSize);
-	sprintf(aMsgBuf," Internal Heap: %ld", (long) (aFreeInternalHeapSize));
+	sprintf(aMsgBuf," Min SPI free: %ld",    (long) (aMinFreeSpiHeapSize));
 	espInfoResultStr += string(aMsgBuf);
-	sprintf(aMsgBuf," Internal Min Heap free: %ld", (long) (aMinFreeInternalHeapSize));
+	//sprintf(aMsgBuf," Min Free Heap Size: %ld", (long) aMinFreeHeapSize);
+	//sprintf(aMsgBuf," NOT_SPI Heap: %ld", (long) (aFreeHeapSize - aFreeSPIHeapSize));
+	//espInfoResultStr += string(aMsgBuf);
+	//sprintf(aMsgBuf," largest Block Size:  %ld", (long) aHeapLargestFreeBlockSize);
+	sprintf(aMsgBuf," Internal Heap: %ld",   (long) (aFreeInternalHeapSize));
+	espInfoResultStr += string(aMsgBuf);
+	sprintf(aMsgBuf," larg. Blk  free: %ld", (long) (aInternalHeapLargestFreeBlockSize));
+	espInfoResultStr += string(aMsgBuf);
+	sprintf(aMsgBuf," Min Heap free: %ld",   (long) (aMinFreeInternalHeapSize));
 	espInfoResultStr += string(aMsgBuf);
 	return 	espInfoResultStr;
 }
 
+
+// Helper functions to trace Heap at start and end of a function
 
 size_t getESPHeapSize(){
    size_t aFreeHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT);
    return aFreeHeapSize;
 }
 
+// internal Heap
+
 size_t getInternalESPHeapSize() {
 	size_t aFreeInternalHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
 	return aFreeInternalHeapSize;
 }
+
+size_t getInternalESPLargestFreeBlockSize() {
+	size_t aInternalHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	return aInternalHeapLargestFreeBlockSize;
+}
+
+size_t getMinFreeInternalEspHeapSize() {
+	size_t aMinFreeInternalHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_INTERNAL);
+	return aMinFreeInternalHeapSize;
+}
+
+// Spi Heap
+
+size_t getSPIHeapSize() {
+	size_t aFreeSpiHeapSize  = heap_caps_get_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
+	return aFreeSpiHeapSize;
+}
+
+
+
+size_t getSpiLargestFreeBlockSize() {
+	size_t aSpiHeapLargestFreeBlockSize = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
+	return aSpiHeapLargestFreeBlockSize;
+}
+
+size_t getMinFreeSpiEspHeapSize() {
+	size_t aMinFreeSpiHeapSize =  heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT| MALLOC_CAP_SPIRAM);
+	return aMinFreeSpiHeapSize;
+}
+
 
 
 

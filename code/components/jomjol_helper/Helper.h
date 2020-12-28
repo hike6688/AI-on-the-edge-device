@@ -32,6 +32,13 @@ void memCopyGen(uint8_t* _source, uint8_t* _target, int _size);
 
 ///////////////////////////
 size_t getInternalESPHeapSize();
+size_t getInternalESPLargestFreeBlockSize() ;
+size_t getMinFreeInternalEspHeapSize();
+
+size_t getSPIHeapSize();
+size_t getSpiLargestFreeBlockSize();
+size_t getMinFreeSpiEspHeapSize();
+
 size_t getESPHeapSize();
 string getESPHeapInfo();
 

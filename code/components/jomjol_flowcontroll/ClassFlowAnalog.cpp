@@ -219,6 +219,9 @@ void ClassFlowAnalog::DrawROI(CImageBasis *_zw)
 
 bool ClassFlowAnalog::doNeuralNetwork(string time)
 {
+    std::string aFktId="ClassFlowAnalog::doNeuralNetwork ";
+    char buf[80];
+
     string logPath = CreateLogFolder(time);
     
     string input = "/sdcard/img_tmp/alg.jpg";
@@ -262,6 +265,9 @@ bool ClassFlowAnalog::doNeuralNetwork(string time)
         ROI[i]->result = result * 10;
 
         printf("Result Analog%i: %f\n", i, ROI[i]->result); 
+
+        sprintf(buf,"Result Analog%i: %f", i, ROI[i]->result); 
+        LogFile.WriteToFile(aFktId + string(buf));
 
         if (isLogImage)
         {

@@ -7,6 +7,8 @@
 #include "ClassControllCamera.h"
 
 #include "ClassLogFile.h"
+#include "time_sntp.h"
+#include "Helper.h"
 
 #define SCRATCH_BUFSIZE2  8192 
 char scratch2[SCRATCH_BUFSIZE2];
@@ -177,6 +179,74 @@ esp_err_t handler_capture_save_to_file(httpd_req_t *req)
     return ressult;
 };
 
+esp_err_t handler_capture_with_light_and_save_to_file(httpd_req_t *req)
+{
+    std::string aMsgHead = "server_camera::handler_capture_with_light_save_to_file ";
+    LogFile.WriteToFile(aMsgHead + "start ");
+    char msgBuf[1024+30];
+    sprintf(msgBuf,"uri: %s",req->uri);
+    LogFile.WriteToFile(aMsgHead + std::string(msgBuf));
+    char _query[100];
+    char _delay[10];
+    int delay = 1;
+    char filename[100];
+    std::string fn = "/sdcard/pictures/";
+
+    std::string currentDayTimeStr = gettimestring("%Y-%m-%d"); 
+    fn.append(currentDayTimeStr);fn.append("/");
+    
+    
+    bool isPictureImageDir  = mkdir_r(fn.c_str(), S_IRWXU) == 0;
+    if (!isPictureImageDir) {
+        sprintf(msgBuf,"Can't create folder for images. Path %s", fn.c_str());
+        ESP_LOGW("Server_camera", "%s",msgBuf);
+        LogFile.WriteToFile("Server_camera: " + string(msgBuf));
+    }
+    std::string currentDateTimeStr = gettimestring("%Y-%m-%d_%H-%M-%S");
+    fn.append(currentDateTimeStr); fn.append("_");
+
+    int quality;
+    framesize_t res;    
+
+    if (httpd_req_get_url_query_str(req, _query, 100) == ESP_OK)
+    {
+        printf("Query: "); printf(_query); printf("\n");
+        if (httpd_query_key_value(_query, "filename", filename, 100) == ESP_OK)
+        {
+            fn.append(filename);
+            printf("Filename: "); printf(fn.c_str()); printf("\n");            
+        }
+        else
+            fn.append("noname.jpg");
+
+        if (httpd_query_key_value(_query, "delay", _delay, 10) == ESP_OK)
+        {
+            printf("Delay: "); printf(_delay); printf("\n");            
+            delay = atoi(_delay);
+
+            if (delay < 0)
+                delay = 0;
+        }
+
+    }
+    else
+        fn.append("noname.jpg");
+
+    Camera.GetCameraParameter(req, quality, res);
+    printf("Size: %d", res); printf(" Quality: %d\n", quality);
+    Camera.SetQualitySize(quality, res);
+
+    esp_err_t ressult;
+    ressult = Camera.CaptureToFile(fn, delay);  
+
+    const char* resp_str = (const char*) fn.c_str();
+    httpd_resp_send(req, resp_str, strlen(resp_str));  
+  
+    LogFile.WriteToFile(aMsgHead + "finished ");
+    return ressult;
+};
+
+
 
 
 void register_server_camera_uri(httpd_handle_t server)
@@ -208,6 +278,11 @@ void register_server_camera_uri(httpd_handle_t server)
 
     camuri.uri       = "/save";
     camuri.handler   = handler_capture_save_to_file;
+    camuri.user_ctx  = NULL; 
+    httpd_register_uri_handler(server, &camuri); 
+
+    camuri.uri       = "/save_with_flashlight";
+    camuri.handler   = handler_capture_with_light_and_save_to_file;
     camuri.user_ctx  = NULL; 
     httpd_register_uri_handler(server, &camuri);    
 }

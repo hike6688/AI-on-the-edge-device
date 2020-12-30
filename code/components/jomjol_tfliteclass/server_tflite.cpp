@@ -23,7 +23,8 @@ ClassFlowControll tfliteflow;
 TaskHandle_t xHandleblink_task_doFlow = NULL;
 TaskHandle_t xHandletask_autodoFlow = NULL;
 
-
+int64_t doFlowLastFinishedTime = 0;
+int64_t doFlowNextStartTime= 0;
 
 
 bool flowisrunning = false;
@@ -36,6 +37,41 @@ int countRounds = 0;
 
 int getCountFlowRounds() {
     return countRounds;
+}
+
+std::string getFlowStatusStr(){
+    return tfliteflow.getActStatus();
+}
+
+int getTimeSinceLastFlow() {
+    int64_t timeNow = esp_timer_get_time(); // in microseconds
+    int64_t deltaTime  = (timeNow - doFlowLastFinishedTime) / 1000000;
+    return (int) deltaTime;
+}
+
+std::string getTimeSinceLastFlowStr() {
+    char aMsgBuf[40];
+    sprintf(aMsgBuf,"%d s ago ",  getTimeSinceLastFlow());
+    std::string aDeltaTimeStr = string(aMsgBuf);
+    if (countRounds <= 1) {
+        aDeltaTimeStr = "executing first autoflow";
+    } 
+    if (flowisrunning) {
+        aDeltaTimeStr  = "Flow is currently running";;
+    }
+    return aDeltaTimeStr;
+}
+
+
+std::string getNextFlowStartTimeDiff(){
+    char aMsgBuf[40];
+    int64_t timeNow = esp_timer_get_time(); // in microseconds
+    sprintf(aMsgBuf,"%ld s",(long) ((doFlowNextStartTime - timeNow ) / 1000000 ));
+    std::string nextFlowTimeDeltaStr = string(aMsgBuf);
+    if (flowisrunning) {
+        nextFlowTimeDeltaStr = "Flow is currently running";
+    }
+    return nextFlowTimeDeltaStr;
 }
 
 
@@ -459,9 +495,30 @@ esp_err_t handler_prevalue(httpd_req_t *req)
 
 void task_autodoFlow(void *pvParameter)
 {
+    std::string aMsgHead ="Server_tflite::task_autodoFlow ";
+    LogFile.WriteToFile(aMsgHead + "start");
+    char buf[80];
+
     int64_t fr_start, fr_delta_ms;
 
+    long spiHeapAtStartOfTask =  getSPIHeapSize();
+    long spiHeapAtStartOfRound = spiHeapAtStartOfTask;
+    long spiHeapAtEndOfRound  = spiHeapAtStartOfTask;
+
+    long internalHeapAtStartOfTask = getInternalESPHeapSize();
+    long internalHeapAtStartOfRound = internalHeapAtStartOfTask;
+    long internalHeapAtEndOfRound   = internalHeapAtStartOfTask;
+
     doInit();
+
+    long spiHeapAfterDoInit = getSPIHeapSize();
+    long diffSpiDoInit = spiHeapAtStartOfTask - spiHeapAfterDoInit ; 
+    sprintf(buf,"Spi at start %ld after init %ld diff %ld ", spiHeapAtStartOfTask,spiHeapAfterDoInit,diffSpiDoInit);
+    LogFile.WriteToFile(aMsgHead + string(buf));
+    long internalHeapAfterDoInit = getInternalESPHeapSize();
+    long diffinternalDoInit = internalHeapAtStartOfTask - internalHeapAfterDoInit ; 
+    sprintf(buf,"internal at start %ld after init %ld diff %ld ", internalHeapAtStartOfTask,internalHeapAfterDoInit,diffinternalDoInit);
+    LogFile.WriteToFile(aMsgHead + string(buf));
     
     auto_isrunning = tfliteflow.isAutoStart(auto_intervall);
 
@@ -492,6 +549,10 @@ void task_autodoFlow(void *pvParameter)
             LogFile.RemoveOld();
         }
         
+        bool _rawValue = true; bool _noerror = true;
+        std::string rawResultStr  = tfliteflow.getReadout(_rawValue, _noerror);
+        LogFile.WriteToDedicatedFile("/sdcard/log/raw_data.txt",to_string(countRounds) + " Raw value: " + rawResultStr);
+
         LogFile.WriteToFile("task_autodoFlow - round done");
         //CPU Temp
         float cputmp = temperatureRead();
@@ -503,6 +564,26 @@ void task_autodoFlow(void *pvParameter)
         fr_delta_ms = (esp_timer_get_time() - fr_start) / 1000;
         const TickType_t xDelay = (auto_intervall - fr_delta_ms)  / portTICK_PERIOD_MS;
         printf("Autoflow: sleep for : %ldms\n", (long) xDelay);
+
+        spiHeapAtEndOfRound = getSPIHeapSize();
+        long spiRoundDiff = spiHeapAtStartOfRound - spiHeapAtEndOfRound;
+        long spiDiffToTaskStart = spiHeapAtStartOfTask - spiHeapAtEndOfRound;
+        sprintf(buf,"Spi at end %ld at start round  %ld diff %ld  diff to task start %ld", spiHeapAtEndOfRound,spiHeapAtStartOfRound,spiRoundDiff,spiDiffToTaskStart);
+        LogFile.WriteToFile(aMsgHead + string(buf));
+
+        internalHeapAtEndOfRound = getInternalESPHeapSize();
+        long internalRoundDiff = internalHeapAtStartOfRound -      internalHeapAtEndOfRound;
+        long internalDiffToTaskStart = internalHeapAtStartOfTask - internalHeapAtEndOfRound ;
+        sprintf(buf,"internal at end %ld at start round  %ld diff %ld  diff to task start %ld", internalHeapAtEndOfRound,internalHeapAtStartOfRound,internalRoundDiff,internalDiffToTaskStart);
+        LogFile.WriteToFile(aMsgHead + string(buf));
+
+        LogFile.WriteToFile(aMsgHead + "- round done " + to_string(countRounds));
+
+        doFlowLastFinishedTime = esp_timer_get_time();
+        long aDelayInMs = auto_intervall - fr_delta_ms;
+        doFlowNextStartTime =  doFlowLastFinishedTime +  aDelayInMs * 1000;
+
+
         vTaskDelay( xDelay );        
     }
     vTaskDelete(NULL); //Delete this task if it exits from the loop above

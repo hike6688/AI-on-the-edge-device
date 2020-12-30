@@ -90,6 +90,9 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath, const
     char entrysize[16];
     const char *entrytype;
 
+    struct tm  *ts;
+    char  timebuf[100];
+
     struct dirent *entry;
     struct stat entry_stat;
 
@@ -146,10 +149,16 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath, const
 
 
     /* Send file-list table definition and column labels */
-    httpd_resp_sendstr_chunk(req,
+    /* httpd_resp_sendstr_chunk(req,
         "<table class=\"fixed\" border=\"1\">"
         "<col width=\"800px\" /><col width=\"300px\" /><col width=\"300px\" /><col width=\"100px\" />"
         "<thead><tr><th>Name</th><th>Type</th><th>Size (Bytes)</th>");
+    */
+   httpd_resp_sendstr_chunk(req,
+        "<table class=\"fixed\" border=\"1\">"
+        "<col width=\"400px\" /><col width=\"100px\" /><col width=\"200px\" /><col width=\"180px\" /><col width=\"100px\" />"
+        "<thead><tr><th>Name</th><th>Type</th><th>Size (Bytes)</th><th>Date</th>");
+
     if (!readonly) {
         httpd_resp_sendstr_chunk(req, "<th>Delete<br>"
             "<form method=\"post\" action=\"");
@@ -172,6 +181,10 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath, const
                 ESP_LOGE(TAG, "Failed to stat %s : %s", entrytype, entry->d_name);
                 continue;
             }
+
+            ts = localtime(&entry_stat.st_mtime);
+            strftime(timebuf, sizeof(timebuf), "%Y-%m-%d %H:%M:%S ", ts); 
+
             sprintf(entrysize, "%ld", entry_stat.st_size);
             ESP_LOGI(TAG, "Found %s : %s (%s bytes)", entrytype, entry->d_name, entrysize);
 
@@ -189,6 +202,8 @@ static esp_err_t http_resp_dir_html(httpd_req_t *req, const char *dirpath, const
             httpd_resp_sendstr_chunk(req, entrytype);
             httpd_resp_sendstr_chunk(req, "</td><td>");
             httpd_resp_sendstr_chunk(req, entrysize);
+            httpd_resp_sendstr_chunk(req, "</td><td>");
+            httpd_resp_sendstr_chunk(req, timebuf);
             if (!readonly) {
                 httpd_resp_sendstr_chunk(req, "</td><td>");
                 httpd_resp_sendstr_chunk(req, "<form method=\"post\" action=\"/delete");
@@ -283,7 +298,12 @@ static esp_err_t logfileact_get_handler(httpd_req_t *req)
 /* Handler to download a file kept on the server */
 static esp_err_t download_get_handler(httpd_req_t *req)
 {
-    LogFile.WriteToFile("download_get_handler");
+    std::string aMsgHead = "download_get_handler ";
+    //LogFile.WriteToFile(aMsgHead + "at start" + getESPHeapInfo());
+    char msgBuf[1024+ 30];
+    sprintf(msgBuf,"uri: %s", req->uri);
+    LogFile.WriteToFile(aMsgHead + string(msgBuf));
+    //LogFile.WriteToFile("download_get_handler");
     char filepath[FILE_PATH_MAX];
     FILE *fd = NULL;
     struct stat file_stat;

@@ -204,6 +204,11 @@ esp_err_t hello_main_handler(httpd_req_t *req)
 
 esp_err_t img_tmp_handler(httpd_req_t *req)
 {
+    std::string aMsgHead = "img_tmp_handler ";
+    char msgBuf[1024+ 30];
+    sprintf(msgBuf,"uri: %s", req->uri);
+    LogFile.WriteToFile(aMsgHead + string(msgBuf));
+    
     char filepath[50];
     printf("uri: %s\n", req->uri);
 
@@ -228,6 +233,11 @@ esp_err_t img_tmp_handler(httpd_req_t *req)
 
 esp_err_t img_tmp_virtual_handler(httpd_req_t *req)
 {
+    std::string aMsgHead = "img_tmp_virtual_handler ";
+    char msgBuf[1024+ 30];
+    sprintf(msgBuf,"uri: %s", req->uri);
+    LogFile.WriteToFile(aMsgHead + string(msgBuf));
+
     if (debug_detail_heap) LogFile.WriteHeapInfo("img_tmp_virtual_handler - Start");    
     char filepath[50];
 
@@ -276,6 +286,13 @@ esp_err_t sysinfo_handler(httpd_req_t *req)
     std::string gitbasebranch = git_base_branch();
     std::string htmlversion = getHTMLversion();
 
+    std::string countFlowRoundsStr = to_string(getCountFlowRounds());
+    std::string flowActStatusStr = getFlowStatusStr();
+
+    std::string timeSinceLastFlowStr = getTimeSinceLastFlowStr();
+    std::string nextFlowStartStr = getNextFlowStartTimeDiff();
+    std::string currentHeapStr = getESPHeapInfo();
+
     tcpip_adapter_ip_info_t ip_info;
     ESP_ERROR_CHECK(tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip_info));
     const char *hostname;
@@ -290,7 +307,12 @@ esp_err_t sysinfo_handler(httpd_req_t *req)
                 \"html\" : \"" + htmlversion + "\",\
                 \"cputemp\" : \"" + cputemp + "\",\
                 \"hostname\" : \"" + hostname + "\",\
-                \"IPv4\" : \"" + ip4addr_ntoa(&ip_info.ip) + "\"\
+                \"IPv4\" : \"" + ip4addr_ntoa(&ip_info.ip) + "\",\
+                \"current heap \" : \"" + currentHeapStr + "\",\
+                \"Last Flow \" : \"" + timeSinceLastFlowStr + "\",\
+                \"next Flow in \" : \"" + nextFlowStartStr + "\",\
+                \"Flow count \" : \"" + countFlowRoundsStr + "\",\
+                \"Flow status \" : \"" + flowActStatusStr + "\"\
             }\
         ]";
 

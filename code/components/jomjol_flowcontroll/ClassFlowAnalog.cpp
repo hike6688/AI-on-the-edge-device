@@ -262,6 +262,16 @@ bool ClassFlowAnalog::doNeuralNetwork(string time)
 
         float result = fmod(atan2(f1, f2) / (M_PI * 2) + 2, 1);
 //        printf("Result sin, cos, ziffer: %f, %f, %f\n", f1, f2, result);  
+        if (i==2) {
+            sprintf(buf,"raw Result Analog%i: %f", i, result); 
+            LogFile.WriteToFile(aFktId + string(buf));
+            // correct the value of Analog3 , pointer points to the opposite side
+            if (result > 0.5) {
+               // result = result - 0.5;
+            } else {
+               // result = result + 0.5;
+            }
+        }
         ROI[i]->result = result * 10;
 
         printf("Result Analog%i: %f\n", i, ROI[i]->result); 
@@ -289,8 +299,17 @@ std::vector<HTMLInfo*> ClassFlowAnalog::GetHTMLInfo()
     for (int i = 0; i < ROI.size(); ++i)
     {
         HTMLInfo *zw = new HTMLInfo;
+        /*
         zw->filename = ROI[i]->name + ".jpg";
         zw->val = ROI[i]->result;
+        result.push_back(zw);
+        */
+        // see ClassFlowDigit::GetHTMLInfo
+        zw->filename = ROI[i]->name + ".bmp";
+        zw->filename_org = ROI[i]->name + ".jpg";
+        zw->val = ROI[i]->result;
+        zw->image = ROI[i]->image;
+        zw->image_org = ROI[i]->image_org;
         result.push_back(zw);
     }
 

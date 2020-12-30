@@ -257,6 +257,7 @@ string ClassFlowPostProcessing::ShiftDecimal(string in, int _decShift){
 
 bool ClassFlowPostProcessing::doFlow(string zwtime)
 {
+    std::string aFktId ="ClassFlowPostProcessing::doFlow ";
     string result = "";
     string digit = "";
     string analog = "";
@@ -311,8 +312,9 @@ bool ClassFlowPostProcessing::doFlow(string zwtime)
     if (isanalog)
         ReturnRawValue = ReturnRawValue + analog; 
 
-    ReturnRawValue = ShiftDecimal(ReturnRawValue, DecimalShift);   
+    LogFile.WriteToFile(aFktId + " ReturnRawValue: " + ReturnRawValue);
 
+    ReturnRawValue = ShiftDecimal(ReturnRawValue, DecimalShift);   
     if (!PreValueUse || !PreValueOkay)
     {
         ReturnValue = ReturnRawValue;
@@ -332,6 +334,9 @@ bool ClassFlowPostProcessing::doFlow(string zwtime)
             
             SavePreValue(Value, zwtime);
         }
+
+        LogFile.WriteToFile(aFktId + " ReturnValue: " + ReturnValue);
+
         return true;
     }
 
@@ -371,6 +376,9 @@ bool ClassFlowPostProcessing::doFlow(string zwtime)
         SavePreValue(Value, zwtime);
        
     }
+
+    LogFile.WriteToFile(aFktId + " ReturnValue: " + ReturnValue);
+    
     return true;
 }
 

@@ -406,6 +406,9 @@ esp_err_t ClassFlowControll::SendRawJPG(httpd_req_t *req)
 
 esp_err_t ClassFlowControll::GetJPGStream(std::string _fn, httpd_req_t *req)
 {
+    std::string aMsgHead = "ClassFlowControll::GetJPGStream ";
+    LogFile.WriteToFile(aMsgHead + _fn);
+
     printf("ClassFlowControll::GetJPGStream %s\n", _fn.c_str());
 
     CImageBasis *_send = NULL;
@@ -429,19 +432,27 @@ esp_err_t ClassFlowControll::GetJPGStream(std::string _fn, httpd_req_t *req)
         Dodelete = true;
     }
 
+    bool send_org = false;
+
     std::vector<HTMLInfo*> htmlinfo;
     htmlinfo = GetAllDigital();
     for (int i = 0; i < htmlinfo.size(); ++i)
     {
         if (_fn == htmlinfo[i]->filename)
         {
-            if (htmlinfo[i]->image)
+            if (htmlinfo[i]->image){
                 _send = htmlinfo[i]->image;
+                send_org = false;
+            }
+                
         }
         if (_fn == htmlinfo[i]->filename_org)
         {
-            if (htmlinfo[i]->image_org)
-                _send = htmlinfo[i]->image_org;        
+            if (htmlinfo[i]->image_org){
+                _send = htmlinfo[i]->image_org;
+                send_org = true;  
+            }
+                      
         }
     }
 
@@ -450,19 +461,28 @@ esp_err_t ClassFlowControll::GetJPGStream(std::string _fn, httpd_req_t *req)
     {
         if (_fn == htmlinfo[i]->filename)
         {
-            if (htmlinfo[i]->image)
+            if (htmlinfo[i]->image){
                 _send = htmlinfo[i]->image;
+                send_org = false;
+            }
+                
         }
         if (_fn == htmlinfo[i]->filename_org)
         {
-            if (htmlinfo[i]->image_org)
-                _send = htmlinfo[i]->image_org;        
+            if (htmlinfo[i]->image_org) {
+                _send = htmlinfo[i]->image_org; 
+                send_org = true; 
+            }
+                      
         }
     }
 
     if (_send)
     {
         ESP_LOGI(TAG, "Sending file : %s ...", _fn.c_str());
+        std::string send_from_org_str =" send from image";
+        if (send_org) send_from_org_str =" send from image_org";
+        LogFile.WriteToFile(aMsgHead + _fn + send_from_org_str);
         set_content_type_from_file(req, _fn.c_str());
         result = _send->SendJPGtoHTTP(req);
         ESP_LOGI(TAG, "File sending complete");    
